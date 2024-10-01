@@ -1,32 +1,40 @@
-import {  HttpException, HttpStatus, Injectable  } from '@nestjs/common';
-import { plainToClass } from 'class-transformer';
-import { SerializedUser, User } from 'src/users/types';
+import {  HttpException, HttpStatus, Injectable  } from '@nestjs/common'; 
+import { InjectRepository } from '@nestjs/typeorm';
+import { User  } from 'src/typeorm/User';
+import { CreateUserDto } from 'src/users/dto/CreateUser.dto';
+import { SerializedUser } from 'src/users/types';
+import { hashPassword } from 'src/utils/bcrypt';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-    private users:User[] = [
-        {
-            username: 'john',
-            password: 'doe',
-        },
-        {
-            username: 'jane',
-            password: 'doe',
-        },
-        {
-            username: 'alice',
-            password: 'alice',
-        }
-    ];
+
+    constructor(@InjectRepository(User) private readonly userRepository:Repository<User>){}
  
-    getAllUsers(){
-        // return this.users.map((user)=>plainToClass(SerializedUser,user));
-        return this.users.map((user)=> new SerializedUser(user));
-    }
  
+    getAllUsers(){ 
+        const user =  this.userRepository.find(); 
+        return user;
+    } 
     findUserByUsername(username:string){
-       const user = this.users.find(user => user.username === username);
-       if(user)return new SerializedUser(user);
-       else throw new HttpException("User not found",HttpStatus.BAD_REQUEST);
+        return this.userRepository.findOne({ where: { username } });
     }
+
+    findUserById(id:number){ 
+        return this.userRepository.findOne({ where: { id } });
+        
+    }
+
+    createUser(createUserDto:CreateUserDto){ 
+        const password = hashPassword(createUserDto.password);
+  
+        const newUser = this.userRepository.create({...createUserDto,password});
+        this.userRepository.save(newUser);
+        return new SerializedUser(newUser);
+
+    };
+
+    
+
+ 
 }
