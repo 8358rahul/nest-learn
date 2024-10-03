@@ -11,7 +11,7 @@ import { SessionSerializer } from './utils/SessionSerializer';
 @Module({
   imports: [
   TypeOrmModule.forFeature([User]),
-  PassportModule.register({session:true}),
+
 ],
   controllers: [AuthController],
   providers: [
